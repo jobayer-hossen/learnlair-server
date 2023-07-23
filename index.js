@@ -24,40 +24,66 @@ const client = new MongoClient(uri, {
   }
 });
 
+const learnLairCollection = client.db('learnLairDB').collection('allData');
+const learnLairCandidateDataCollection = client.db('learnLairDB').collection('candidateData');
+const learnLairReviewCollection = client.db('learnLairDB').collection('review');
+
+app.get('/getData', async(req,res)=>{
+    const result = await learnLairCollection.find().toArray();
+    res.send(result);
+});
+
+app.get('/getData/:id' , async(req,res)=>{
+    const id = req.params.id;
+    const query = { _id: new ObjectId(id) };
+    const result = await learnLairCollection.findOne(query);
+    res.send(result);
+  });
+
+  app.get("/searchName/:text", async (req, res) => {
+    const indexKeys = { collegeName: 1 };
+    const indexOptions = { collegeName:"collegeName" };
+    const result2 = await learnLairCollection.createIndex(indexKeys, indexOptions);
+    const text = req.params.text;
+    const result = await learnLairCollection
+      .find({
+        $or: [
+          { collegeName: { $regex: text, $options: "i" } },
+        ],
+      })
+      .toArray();
+    res.send(result);
+  }); 
+
+app.post('/addCandidateData' , async(req,res)=>{
+    const storeCandidateData = req.body;
+    const result = await learnLairCandidateDataCollection.insertOne(storeCandidateData);
+    res.send(result);
+  });
+
+app.get('/myCollege/:email', async(req,res)=>{
+    const email = req.params.email;
+    const filter = {email : email}
+    const result = await learnLairCandidateDataCollection.find(filter).toArray();
+    res.send(result);
+});
+
+app.post('/addReview' , async(req,res)=>{
+  const storeReview = req.body;
+  const result = await learnLairReviewCollection.insertOne(storeReview);
+  res.send(result);
+});
+
+app.get('/getReview', async(req,res)=>{
+  const result = await learnLairReviewCollection.find().toArray();
+  res.send(result);
+});
+
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-
-    const learnLairCollection = client.db('learnLairDB').collection('allData');
-
-    app.get('/getData', async(req,res)=>{
-        const result = await learnLairCollection.find().toArray();
-        res.send(result);
-    });
-
-    app.get('/getData/:id' , async(req,res)=>{
-        const id = req.params.id;
-        const query = { _id: new ObjectId(id) };
-        const result = await learnLairCollection.findOne(query);
-        res.send(result);
-      });
-
-      app.get("/searchName/:text", async (req, res) => {
-        const indexKeys = { collegeName: 1 };
-        const indexOptions = { collegeName:"collegeName" };
-        const result2 = await learnLairCollection.createIndex(indexKeys, indexOptions);
-        const text = req.params.text;
-        const result = await learnLairCollection
-          .find({
-            $or: [
-              { collegeName: { $regex: text, $options: "i" } },
-            ],
-          })
-          .toArray();
-        res.send(result);
-      }); 
-
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
