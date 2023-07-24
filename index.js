@@ -33,7 +33,7 @@ app.get('/getData', async(req,res)=>{
     res.send(result);
 });
 
-app.get('/getData/:id' , async(req,res)=>{
+  app.get('/getData/:id' , async(req,res)=>{
     const id = req.params.id;
     const query = { _id: new ObjectId(id) };
     const result = await learnLairCollection.findOne(query);
@@ -68,6 +68,28 @@ app.get('/myCollege/:email', async(req,res)=>{
     res.send(result);
 });
 
+app.get('/editCandidateData/:id' , async(req,res)=>{
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+  const result = await learnLairCandidateDataCollection.findOne(query);
+  res.send(result);
+});
+
+app.patch('/updateCandidateData/:id' , async(req,res)=>{
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+  const updateData = {
+    $set: {
+      candidateName: req.body.candidateName,
+      candidateEmail: req.body.candidateEmail,
+      address: req.body.address,
+      collegeName: req.body.collegeName
+    },
+  };
+  const result = await learnLairCandidateDataCollection.updateOne(query,updateData);
+  res.send(result);
+})
+
 app.post('/addReview' , async(req,res)=>{
   const storeReview = req.body;
   const result = await learnLairReviewCollection.insertOne(storeReview);
@@ -93,14 +115,6 @@ async function run() {
   }
 }
 run().catch(console.dir);
-
-
-
-
-
-
-
-
 
 app.get('/',(req,res)=>{
     res.send('learnLair server running')
